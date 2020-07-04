@@ -16,6 +16,13 @@ var self = {
 // Add self player to beginning of players array:
 players.unshift(self);
 
+var keyState = {
+  ArrowLeft: false,
+  ArrowRight: false,
+  ArrowUp: false,
+  ArrowDown: false
+}
+
 /* - - - - - - - - - -
    Setup Websocket:
   - - - - - - - - - - */
@@ -81,60 +88,82 @@ function startGame() {
   function gameLoop() {
     // Clear canvas
     ctx.clearRect(0, 0, 200, 200);
-    // Redraw each player based on updated position
+
+    // Redraw each player
     for (var i in players) {
       var player = players[i];
+
+      // If player is you, move based on keys
+      if (i === "0") {
+        const speed = 5;
+        // Update player position:
+        for (let i in keyState) {
+          if (keyState[i]) {
+            switch (i) {
+              case "ArrowLeft":
+                player.x -= speed;
+                break;
+              case "ArrowRight":
+                player.x += speed;
+                break;
+              case "ArrowUp":
+                player.y -= speed;
+                break;
+              case "ArrowDown":
+                player.y += speed;
+                break;
+            }
+          }
+        }
+
+        // Detect player going past boundries
+        if (player.x > 190) {
+          player.x = 190;
+        }
+        if (player.x < 10) {
+          player.x = 10;
+        }
+        if (player.y > 190) {
+          player.y = 190;
+        }
+        if (player.y < 10) {
+          player.y = 10;
+        }
+
+        // Send new position to server:
+        connection.send(
+          JSON.stringify({ x: player.x, y: player.y, color: player.color })
+        );
+      }
+
       ctx.beginPath();
       ctx.arc(player.x, player.y, 10, 0, 2 * Math.PI);
       ctx.fillStyle = player.color;
       ctx.fill();
       ctx.stroke();
-
-      // Detect player going past boundries
-      if (player.x > 190) {
-        player.x = 190;
-      }
-      if (player.x < 10) {
-        player.x = 10;
-      }
-      if (player.y > 190) {
-        player.y = 190;
-      }
-      if (player.y < 10) {
-        player.y = 10;
-      }
     }
 
     requestAnimationFrame(gameLoop);
   }
 
 
-  document.addEventListener("keydown", detectKeyPress.bind(this, players[0]));
-
-  function detectKeyPress(player, e) {
-    const speed = 5;
+  document.addEventListener("keydown", detectKeyPress.bind(this, players[0], true));
+  document.addEventListener("keyup", detectKeyPress.bind(this, players[0], false));
+  
+  function detectKeyPress(player, setAs, e) {
     switch (e.code) {
       case "ArrowUp":
-        player.y -= speed;
-        break;
       case "ArrowLeft":
-        player.x -= speed;
-        break;
       case "ArrowDown":
-        player.y += speed;
-        break;
       case "ArrowRight":
-        player.x += speed;
+        keyState[e.code] = setAs;
         break;
     }
-    // Send new position to server:
-    connection.send(
-      JSON.stringify({ x: player.x, y: player.y, color: player.color })
-    );
   }
+
+  gameLoop();
 }
 
-gameLoop();
 
 // Random color generator for player Ids
 function randomColor() {
