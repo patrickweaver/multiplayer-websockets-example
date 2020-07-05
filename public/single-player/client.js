@@ -81,6 +81,16 @@ function gameLoop() {
 document.addEventListener("keydown", detectKeyPress.bind(this, players[0], true));
 document.addEventListener("keyup", detectKeyPress.bind(this, players[0], false));
 
+// Screen buttons
+const buttons = ["ArrowUp", "ArrowLeft", "ArrowRight", "ArrowDown"];
+buttons.forEach(i => {
+  let el = document.getElementById(i)
+  el.addEventListener("touchstart", detectKeyPress.bind(this, players[0], true, {code: i}));
+  el.addEventListener("touchend", detectKeyPress.bind(this, players[0], false, {code: i}));
+  el.addEventListener("mousedown", detectKeyPress.bind(this, players[0], true, {code: i}));
+  el.addEventListener("mouseup", detectKeyPress.bind(this, players[0], false, {code: i}));
+});
+
 function detectKeyPress(player, setAs, e) {
   switch (e.code) {
     case "ArrowUp":
